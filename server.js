@@ -294,8 +294,8 @@ app.post('/sequence', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4003;
-app.listen(PORT, () => {
-  console.log(`AXIOM Browser HTTP on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`AXIOM Browser HTTP on 0.0.0.0:${PORT}`);
   initBrowser().then(() => {
     console.log('[BROWSER] ✅ Chrome launched successfully');
   }).catch(e => {
