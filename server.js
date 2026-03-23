@@ -18,10 +18,27 @@ app.use((req, res, next) => {
 
 // Launch browser on startup
 async function initBrowser() {
+  const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+  console.log(`[BROWSER] Launching Chrome from ${execPath}...`);
   browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
-           '--disable-gpu', '--single-process'],
+    executablePath: execPath,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+      '--single-process',
+      '--no-zygote',
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-default-apps',
+      '--disable-sync',
+      '--disable-translate',
+      '--metrics-recording-only',
+      '--no-first-run',
+    ],
   });
   activePage = await browser.newPage();
   await activePage.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
@@ -30,6 +47,10 @@ async function initBrowser() {
 }
 
 async function getPage() {
+  if (!browser) {
+    console.log('[BROWSER] No browser — attempting init...');
+    await initBrowser();
+  }
   if (!activePage || activePage.isClosed()) {
     activePage = await browser.newPage();
     await activePage.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
@@ -39,7 +60,7 @@ async function getPage() {
 }
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'axiom-browser', browser_connected: !!browser });
+  res.json({ status: 'ok', service: 'axiom-browser', browser_connected: !!browser, port: PORT });
 });
 
 // Navigate to a URL
@@ -282,9 +303,12 @@ app.post('/sequence', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4003;
-initBrowser().then(() => {
-  app.listen(PORT, () => console.log(`AXIOM Browser on port ${PORT}`));
-}).catch(e => {
-  console.error('Browser init failed:', e);
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`AXIOM Browser HTTP on port ${PORT}`);
+  initBrowser().then(() => {
+    console.log('[BROWSER] ✅ Chrome launched successfully');
+  }).catch(e => {
+    console.error('[BROWSER] ❌ Chrome launch failed:', e.message);
+    console.error('[BROWSER] Service running without browser — will retry on first request');
+  });
 });
