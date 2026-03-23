@@ -18,11 +18,9 @@ app.use((req, res, next) => {
 
 // Launch browser on startup
 async function initBrowser() {
-  const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
-  console.log(`[BROWSER] Launching Chrome from ${execPath}...`);
+  console.log('[BROWSER] Launching Chrome...');
   browser = await puppeteer.launch({
     headless: 'new',
-    executablePath: execPath,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -31,13 +29,6 @@ async function initBrowser() {
       '--disable-software-rasterizer',
       '--single-process',
       '--no-zygote',
-      '--disable-extensions',
-      '--disable-background-networking',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--disable-translate',
-      '--metrics-recording-only',
-      '--no-first-run',
     ],
   });
   activePage = await browser.newPage();
