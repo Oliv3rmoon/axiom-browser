@@ -1,16 +1,18 @@
-FROM ghcr.io/puppeteer/puppeteer:23.4.0
+FROM node:20-bookworm-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      chromium \
+      fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros fonts-kacst fonts-freefont-ttf \
+      libxss1 libnss3 libatk-bridge2.0-0 libgtk-3-0 libasound2 libgbm1 && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 WORKDIR /app
-
-# Copy as root, then switch
-USER root
 COPY package.json .
 RUN npm install --production
-COPY . .
+COPY server.js .
 
-# Run as non-root pptruser (built into the image)
-USER pptruser
-EXPOSE ${PORT:-4003}
 CMD ["node", "server.js"]
